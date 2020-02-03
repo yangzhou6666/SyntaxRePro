@@ -4,10 +4,23 @@ A comparison of self-healing parsers and machine learning for repairing syntax e
 # Progress
 
 ## On Going
-- [ ] Literature Review: define What is "Syntax Errors".
-- [ ] Literature Review: What errors do these tools focus on?
-- [ ] Write a short report about last two questions.
-- [ ] Mail to SNIC to Handle User Agreement.
+- [ ] Try to reproduce Sensibility Experiment
+- [ ] Write a report: What to Compare? A Perspective of Practical Use.
+
+## Backlog
+
+- [ ] Extract source files with compilation errors from BlueJ.
+- [ ] Extract source files with compilation errors from Travis CI.
+
+## Done
+### Week 5
+
+- [x] Literature Review: define What is "Syntax Errors".
+- [x] Literature Review: What errors do these tools focus on?
+- [x] Write a short report about last two questions.
+- [x] Mail to SNIC to Handle User Agreement.
+- [x] Fully reproduce the experiment of [don't panic..] 
+- [x] Experiments: calculate percentage of syntax errors of 200,000 BlueJ files (100%)
 
 The dataset of the paper - [A Large-Scale Empirical Study of Compiler Errors in Continuous Integration](https://compilererrorinci.github.io) might not be useful to this project. Because syntax errors lead to compilation errors but the converse is not always true. It makes me question that **are these papers focusing on syntax errors?**
 
@@ -32,12 +45,7 @@ public class Giant
 }
 ```
 
-## Backlog
 
-- [ ] Extract source files with compilation errors from BlueJ.
-- [ ] Extract source files with compilation errors from Travis CI.
-
-## Done
 ### Week 04
 
 
