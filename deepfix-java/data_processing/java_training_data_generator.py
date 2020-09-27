@@ -204,71 +204,6 @@ def save_bins(destination, tl_dict, token_vectors, bins):
         save_pairs(os.path.join(destination, 'bin_%d' % i), 
                 token_vectors_this_fold, tl_dict)
 
-# def vectorize(tokens, tldict, max_vector_length):
-#     vec_tokens = []
-#     for token in tokens.split():
-#         try:
-#             vec_tokens.append(tldict[token])
-#         except Exception:
-#             print token
-#             raise
-
-#     if len(vec_tokens) > max_vector_length:
-#         return None
-
-#     return vec_tokens
-
-# def vectorize_data(token_strings, tldict, max_program_length):
-#     token_vectors = {}
-#     skipped = 0
-
-#     for key in token_strings:
-#         token_vectors[key] = {}
-#         for problem_id in token_strings[key]:
-#             token_vectors[key][problem_id] = []
-
-#     for key in token_strings:
-#         for problem_id in token_strings[key]:
-#             for code_id, prog_tokens, fix_tokens in token_strings[key][problem_id]:
-#                 inc_prog_vector = vectorize(prog_tokens, tldict, max_program_length)
-#                 corr_prog_vector = vectorize(fix_tokens, tldict,  max_program_length)
-
-#                 if (inc_prog_vector is not None) and (corr_prog_vector is not None):
-#                     token_vectors[key][problem_id].append((code_id, inc_prog_vector, corr_prog_vector))
-#                 else:
-#                     skipped += 1
-
-#     print 'skipped during vectorization:', skipped
-#     return token_vectors
-
-# def build_dictionary(token_strings, tldict={}):
-
-#     def build_dict(list_generator, dict_ref):
-#         for tokenized_program in list_generator:
-#             for token in tokenized_program.split():
-#                 token = token.strip()
-#                 if token not in dict_ref:
-#                     dict_ref[token] = len(dict_ref)
-
-#     tldict['_pad_'] = 0
-#     tldict['EOF'] = 1
-#     tldict['-new-line-'] = 2
-
-#     for key in token_strings:
-#         for problem_id in token_strings[key]:
-#             build_dict( ( corr_prog for _, inc_prog, corr_prog in token_strings[key][problem_id]), tldict)
-
-#     # required for some programs in the test dataset.
-#     # 这里的33是不是有点小？
-#     for idx in range(33):
-#         if 'IDENTIFIER%d@' % idx not in tldict:
-#             tldict['IDENTIFIER%d@' % idx] = len(tldict)
-
-#     print 'dictionary size:', len(tldict)
-#     assert len(tldict) > 50
-#     return tldict
-
-
 
 def generate_name_dict_store(db_path, bins):
     '''
@@ -291,9 +226,6 @@ def generate_name_dict_store(db_path, bins):
 def generate_training_data(db_path, bins, validation_users, min_program_length, max_program_length, \
                                     max_fix_length, max_mutations, max_variants, seed):
     rng = np.random.RandomState(seed)
-    # 貌似这个tokenize并没有什么用
-    # tokenize = C_Tokenizer().tokenize
-    # convert_to_new_line_format = C_Tokenizer().convert_to_new_line_format
 
     mutator_obj = Typo_Mutate_Java(rng)
     mutate = partial(typo_mutate, mutator_obj)
@@ -306,7 +238,6 @@ def generate_training_data(db_path, bins, validation_users, min_program_length, 
     total_mutate_calls = 0
     program_lengths, fix_lengths = [], []
 
-    # 我们是没有problem_id这一说的 但是使用code_id来代指
     code_id_list = []
     for bin_ in bins:
         for problem_id in bin_:
@@ -323,7 +254,7 @@ def generate_training_data(db_path, bins, validation_users, min_program_length, 
         
 
         rng.shuffle(code_id_list)
-        
+
         # split into train, valiation and test test: 80%, 10%, 10%
         validation_code_id_list = code_id_list[0: int(0.1 * len(code_id_list))]
         test_code_id_list =  code_id_list[int(0.1 * len(code_id_list)): int(0.1 * len(code_id_list)) * 2]
@@ -418,7 +349,9 @@ def generate_training_data(db_path, bins, validation_users, min_program_length, 
 
 if __name__=='__main__':
     # maintain it to keep consistency with deepfix.
+
     drop_ids = True
+    # set drop_ids to True, since we only focus on sytactic structure
     max_program_length = 450
     min_program_length = 100
     max_fix_length = 25
@@ -428,29 +361,23 @@ if __name__=='__main__':
     max_variants = 5
 
     db_path 		 = 'data/java_data/java_data.db'
-    # 原来的使用validation_users来分割valiation数据集，我们不需要
-    # validation_users = np.load('data/iitk-dataset/validation_users.npy', allow_pickle=True).item()
-    # bin里面存储的是problem_id 我们也不需要
-    # bins 			 = np.load('data/iitk-dataset/bins.npy', allow_pickle=True)
-    # mock bins
     bins = get_bins(db_path, min_program_length, max_program_length)
     validation_users = {}
 
-    # 生成的文件夹路径
+    # path to store data
     output_directory = os.path.join('data', 'network_inputs', "Deepfix-Java-seed-%d" % (seed,))
     print 'output_directory:', output_directory
     mkdir(os.path.join(output_directory))
 
-    # 将数据库中code的name_dict, name_seq保存在一个字典中
+    # store name_dict, name_seq data
     name_dict_store = generate_name_dict_store(db_path, bins)
-    # 并没有用到这部分内容
 
-    # 生成训练集
+    # generate dataset
     token_strings, mutations_distribution = generate_training_data(db_path, bins, validation_users, min_program_length,\
                             max_program_length, max_fix_length, max_mutations,\
                             max_variants, seed)
 
-    # 将结果保存下来
+    # store
     np.save(os.path.join(output_directory, 'tokenized-examples.npy'), token_strings)
     np.save(os.path.join(output_directory, 'error-seeding-distribution.npy'), mutations_distribution)
 
