@@ -192,8 +192,8 @@ def save_bins(destination, tl_dict, token_vectors, bins):
                 token_vectors_this_fold['train'] += token_vectors['train'][problem_id]
             if problem_id in token_vectors['validation']:
                 token_vectors_this_fold['validation'] += token_vectors['validation'][problem_id]
-            if problem_id in token_vectors['validation']:
-                token_vectors_this_fold['test'] += token_vectors['validation'][problem_id]
+            if problem_id in token_vectors['test']:
+                token_vectors_this_fold['test'] += token_vectors['test'][problem_id]
 
         make_dir_if_not_exists(os.path.join(destination, 'bin_%d' % i))
 
@@ -223,7 +223,7 @@ def generate_name_dict_store(db_path, bins):
 
 
 # maintain max_fix_length to keep consistentcy with deepfix.
-def generate_training_data(db_path, bins, validation_users, min_program_length, max_program_length, \
+def generate_training_data(db_path, bins, min_program_length, max_program_length, \
                                     max_fix_length, max_mutations, max_variants, seed):
     rng = np.random.RandomState(seed)
 
@@ -327,8 +327,6 @@ def generate_training_data(db_path, bins, validation_users, min_program_length, 
                                 token_strings[key][code_id] = [
                                     (corrupt_program, fix)]
     
-    for key in token_strings.keys():
-        print len(token_strings[key])
     program_lengths = np.sort(program_lengths)
     fix_lengths = np.sort(fix_lengths)
 
@@ -360,9 +358,8 @@ if __name__=='__main__':
     max_mutations = 5
     max_variants = 5
 
-    db_path 		 = 'data/java_data/java_data.db'
+    db_path 		 = '../java_data/java_data.db'
     bins = get_bins(db_path, min_program_length, max_program_length)
-    validation_users = {}
 
     # path to store data
     output_directory = os.path.join('data', 'network_inputs', "Deepfix-Java-seed-%d" % (seed,))
@@ -373,7 +370,7 @@ if __name__=='__main__':
     name_dict_store = generate_name_dict_store(db_path, bins)
 
     # generate dataset
-    token_strings, mutations_distribution = generate_training_data(db_path, bins, validation_users, min_program_length,\
+    token_strings, mutations_distribution = generate_training_data(db_path, bins, min_program_length,\
                             max_program_length, max_fix_length, max_mutations,\
                             max_variants, seed)
 

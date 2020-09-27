@@ -53,7 +53,8 @@ def vectorize(tokens, tldict, max_vector_length=max_program_len):
     return vec_tokens
 
 # convert the df test data into rla format
-for bin_id in range(5):
+n = 1
+for bin_id in range(n):
     raw_test_data[bin_id] = {}
 
     bin_raw_test_data = np.load(os.path.join(deepfix_base_dir, 'bin_%d' % bin_id, 'test_raw_bin_%d.npy' % bin_id), allow_pickle=True).item()
@@ -66,11 +67,11 @@ for bin_id in range(5):
 
 skipped = 0
 
-db_path = '../deepfix-java/data/java_data/java_data.db'
+db_path = '../java_data/java_data.db'
 name_dict_store = generate_name_dict_store(db_path, {})
 
 
-for bin_id in range(5):
+for bin_id in range(n):
     print 'bin_%d' % bin_id,
     target_bin_dir = os.path.join(RLAssist_base_dir, 'bin_%d' % bin_id)
     tl_dict, _ = load_dictionaries(target_bin_dir)
