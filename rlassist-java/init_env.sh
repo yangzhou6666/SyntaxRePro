@@ -13,5 +13,5 @@ mkdir logs
 mkdir data/network_inputs
 mkdir data/checkpoints
 
-quecho 'Virtual environment configured.'
+echo 'Virtual environment configured.'
 
