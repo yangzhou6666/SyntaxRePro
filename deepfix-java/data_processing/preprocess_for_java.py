@@ -66,7 +66,7 @@ def initialize_Benchmark_table(db_path, benchmark_dir):
                 tokenized_code, name_dict, name_seq = get_tokenized_code(code)
                 codelength = len(tokenized_code.split())
                 cursor.execute('''INSERT INTO Benchmark (code_id, code, tokenized_code, name_dict, name_seq, codelength) VALUES (?, ?, ?, ?, ?, ?);''', (file_event_id + 'bench', unicode(code), unicode(tokenized_code), json.dumps(name_dict), json.dumps(name_seq), codelength))
-                count += 1    
+                count += 1 
     
 def get_tokenized_code(code):
     tokens = []
@@ -120,10 +120,12 @@ if __name__ == '__main__':
                         default = 'data/java_data/java_data.db')
     parser.add_argument('-r', '--raw_data_path', help='raw java data path to preprocess',
                         default = '../../java_data/')
-    parser.add_argument('-n', '--num_data', help='Number to data example to generate',
+    parser.add_argument('-n', '--num_data', type=int, help='Number to data example to generate',
                         default = 10000)
     parser.add_argument('-bd', '--benchmark_dir', help = 'Path to src_files directory',
                         default = '../../src_files/')
+    parser.add_argument('-o', '--only_raw_data', help = 'Only update the Code table, do not change Benchmark table',
+                        action='store_true', default=False)
 
     args = parser.parse_args()
     print '----------------------------------------------------'
@@ -137,9 +139,13 @@ if __name__ == '__main__':
     raw_data_path = args.raw_data_path
     benchmark_dir = args.benchmark_dir
     num_data = args.num_data
+    only_raw_data = args.only_raw_data
 
     java = javac_parser.Java()
 
     initialize_database(db_path, raw_data_path, num_data)
-    initialize_Benchmark_table(db_path, benchmark_dir)
+    if not only_raw_data:
+        # initialize benchmark table
+        print 'Start to process Benchmark'
+        initialize_Benchmark_table(db_path, benchmark_dir)
 
