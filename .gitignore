@@ -8,3 +8,6 @@ deepfix-java/data/.DS_Store
 CPCT+/.DS_Store
 rlassist-java/data/deepfix-test-data.zip
 deepfix-java/data/*
+java_data/*
+.DS_Store
+rlassist-java/data/*
