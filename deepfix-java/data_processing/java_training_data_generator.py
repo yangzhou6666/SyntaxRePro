@@ -102,6 +102,7 @@ def vectorize_data(token_strings, tl_dict, max_program_length, max_fix_length, d
                     token_vectors[key][problem_id].append(
                         (prog_vector, fix_vector))
                 else:
+                    print 'something not right'
                     skipped += 1
 
     print 'skipped during vectorization:', skipped
@@ -119,12 +120,10 @@ def build_dictionary(token_strings, drop_ids, tl_dict={}):
                     dict_ref[token] = len(dict_ref)
 
     tl_dict['_pad_'] = 0
-    # tl_dict['_eos_'] = 1
     tl_dict['EOF'] = 1
     tl_dict['~'] = 2
 
     if drop_ids:
-        # tl_dict['_<id>_@'] = 3
         tl_dict['IDENTIFIER'] = 3
 
 
@@ -166,12 +165,12 @@ def get_bins(db_path, min_program_length, max_program_length):
         cursor = conn.cursor()
         query = "SELECT code_id FROM Code WHERE codelength>? and codelength<?;"
         for row in cursor.execute(query, (min_program_length, max_program_length)):
-            # 得到所有的code_id
+            # get all the code_id
             code_id_list.append(row[0])
         
-        length = len(code_id_list)  # 总长
-        n = 5  # 切分成多少份
-        step = int(length / n) + 1  # 每份的长度
+        length = len(code_id_list)  # total length
+        n = 1 # seperate them into n directory， set to 1 not not sperate
+        step = int(length / n) + 1 
         for i in range(0, length, step):
             bins.append(code_id_list[i: i + step])
 
@@ -185,28 +184,25 @@ def save_bins(destination, tl_dict, token_vectors, bins):
             full_list.append(problem_id)
 
     for i, bin_ in enumerate(bins):
-        test_problems = bin_
-        training_problems = list(set(full_list) - set(bin_))
 
         token_vectors_this_fold = {'train': [], 'validation': [], 'test': []}
-
-        for problem_id in training_problems:
+        # bin_ contains all the code id in this folder
+        for problem_id in bin_:
             if problem_id in token_vectors['train']:
                 token_vectors_this_fold['train'] += token_vectors['train'][problem_id]
             if problem_id in token_vectors['validation']:
                 token_vectors_this_fold['validation'] += token_vectors['validation'][problem_id]
-
-        for problem_id in test_problems:
             if problem_id in token_vectors['validation']:
                 token_vectors_this_fold['test'] += token_vectors['validation'][problem_id]
 
         make_dir_if_not_exists(os.path.join(destination, 'bin_%d' % i))
 
         print "Fold %d: Train:%d Validation:%d Test:%d" % (i, len(token_vectors_this_fold['train']),
-                                                           len(token_vectors_this_fold['validation']), len(token_vectors_this_fold['test']))
+                                                           len(token_vectors_this_fold['validation']), 
+                                                           len(token_vectors_this_fold['test']))
 
-        save_pairs(os.path.join(destination, 'bin_%d' %
-                                i), token_vectors_this_fold, tl_dict)
+        save_pairs(os.path.join(destination, 'bin_%d' % i), 
+                token_vectors_this_fold, tl_dict)
 
 # def vectorize(tokens, tldict, max_vector_length):
 #     vec_tokens = []
@@ -304,7 +300,7 @@ def generate_training_data(db_path, bins, validation_users, min_program_length, 
 
     rename_ids = partial(rename_ids_, rng)
 
-    token_strings = {'train': {}, 'validation': {}}
+    token_strings = {'train': {}, 'validation': {}, 'test': {}}
 
     exceptions_in_mutate_call = 0
     total_mutate_calls = 0
@@ -319,37 +315,44 @@ def generate_training_data(db_path, bins, validation_users, min_program_length, 
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
 
-        # query = "SELECT user_id, code_id, tokenized_code FROM Code " + "WHERE problem_id=? and codelength>? and codelength<? and errorcount=0;"
-        # 原来是根据problem_id来进行选择的，但是我们并不关注problem_id，
-        # 而且我们的数据库中也并没有errorcount这一说
-        # 所以重新修改查询语句
-
-        # 但总归要划分的嘛
         code_id_list = []
         query = "SELECT code_id FROM Code WHERE codelength>? and codelength<?;"
         for row in cursor.execute(query, (min_program_length, max_program_length)):
-            # 得到所有的code_id
+            # get all the code_id
             code_id_list.append(row[0])
         
-        # 我们在这里手动分割数据集，按照8:1:1的比例
-        # 首先将顺序打乱
+
         rng.shuffle(code_id_list)
-
+        
+        # split into train, valiation and test test: 80%, 10%, 10%
         validation_code_id_list = code_id_list[0: int(0.1 * len(code_id_list))]
-        training_code_id_list = code_id_list[int(0.1 * len(code_id_list)) :]
+        test_code_id_list =  code_id_list[int(0.1 * len(code_id_list)): int(0.1 * len(code_id_list)) * 2]
+        training_code_id_list = code_id_list[int(0.1 * len(code_id_list)) * 2 :]
 
-        query = "SELECT code_id, tokenized_code FROM Code " + "WHERE codelength>? and codelength<?;"
+        # make sure they do not intersect
+        assert list(set(training_code_id_list) & set(validation_code_id_list)) == []
+        assert list(set(training_code_id_list) & set(test_code_id_list)) == []
+        assert list(set(validation_code_id_list) & set(test_code_id_list)) == []
+
+        query = "SELECT code_id, tokenized_code, codelength FROM Code " + "WHERE codelength>? and codelength<?;"
+        total_variant_cnt = 0
         for row in cursor.execute(query, (min_program_length, max_program_length)):
-            code_id, tokenized_program = map(str, row)
-            # 确定是validation还是train
-            key = 'validation' if code_id in validation_code_id_list else 'train'
+            code_id = row[0]
+            tokenized_program = row[1]
 
-            # 计算程序token的数量
-            program_length = len(tokenized_program.split())
+            if code_id in validation_code_id_list:
+                key = 'validation'
+            if code_id in test_code_id_list:
+                key = 'test'
+            if code_id in training_code_id_list:
+                key = 'train'
+
+            # number of tokens
+            program_length = row[2] # row[2] is codelength
             program_lengths.append(program_length)
 
-            if program_length >= min_program_length and program_length <= max_program_length:
-                # 开始mutate
+            if program_length > min_program_length and program_length < max_program_length:
+                # start to mutate
 
                 total_mutate_calls += 1
                 try:
@@ -377,10 +380,10 @@ def generate_training_data(db_path, bins, validation_users, min_program_length, 
                         corrupt_program_length = len(corrupt_program.split())
                         fix_length             = len(fix.split())
                         fix_lengths.append(fix_length)
-
-
+                        
                         if corrupt_program_length >= min_program_length and \
                         corrupt_program_length <= max_program_length and fix_length <= max_fix_length:
+                            total_variant_cnt += 1
                             try:
                                 corrupt_program, fix = rename_ids(corrupt_program, fix)
                             except FixIDNotFoundInSource:
@@ -392,7 +395,9 @@ def generate_training_data(db_path, bins, validation_users, min_program_length, 
                             except:
                                 token_strings[key][code_id] = [
                                     (corrupt_program, fix)]
-
+    
+    for key in token_strings.keys():
+        print len(token_strings[key])
     program_lengths = np.sort(program_lengths)
     fix_lengths = np.sort(fix_lengths)
 
@@ -405,6 +410,7 @@ def generate_training_data(db_path, bins, validation_users, min_program_length, 
         print e
         print 'fix_lengths'
     print 'Total mutate calls:', total_mutate_calls
+    print 'Total vairants generated: ', total_variant_cnt
     print 'Exceptions in mutate() call:', exceptions_in_mutate_call, '\n'
     
     return token_strings, mutator_obj.get_mutation_distribution()
@@ -414,12 +420,12 @@ if __name__=='__main__':
     # maintain it to keep consistency with deepfix.
     drop_ids = True
     max_program_length = 450
-    min_program_length = 75
+    min_program_length = 100
     max_fix_length = 25
     seed = 1189
 
     max_mutations = 5
-    max_variants = 2
+    max_variants = 5
 
     db_path 		 = 'data/java_data/java_data.db'
     # 原来的使用validation_users来分割valiation数据集，我们不需要
@@ -444,20 +450,14 @@ if __name__=='__main__':
                             max_program_length, max_fix_length, max_mutations,\
                             max_variants, seed)
 
-    print token_strings['train'].keys()
-    # exit()
-
-
     # 将结果保存下来
     np.save(os.path.join(output_directory, 'tokenized-examples.npy'), token_strings)
     np.save(os.path.join(output_directory, 'error-seeding-distribution.npy'), mutations_distribution)
 
     tl_dict = build_dictionary(token_strings, drop_ids, {})
-    print tl_dict
 
     token_vectors = vectorize_data(token_strings, tl_dict, max_program_length, max_fix_length, drop_ids=True)
 
-    # print token_vectors
 
     save_bins(output_directory, tl_dict, token_vectors, bins)
 
