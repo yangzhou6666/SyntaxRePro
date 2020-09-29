@@ -7,3 +7,15 @@
 5. `python combos_to_pair.py` (python2)
 
 Step 5 consumes a large amount of time. The tool we use `/tools/nccb/bin/print-source-state` will output results in the terminal.
+
+The generated result in `java_data` directory will be:
+
+```
+java_data
+├── fileID_eventID
+│   ├── 0
+│   ├── 1
+|   .....
+```
+
+
