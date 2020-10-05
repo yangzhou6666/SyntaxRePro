@@ -69,7 +69,7 @@ if __name__ == '__main__':
     max_mutations = 5
     seed = 1189
 
-    db_path 		 = 'data/java_data/java_data.db'
+    db_path 		 = '../java_data/java_data.db'
     output_directory = os.path.join('data', 'network_inputs', "Deepfix-Java-seed-%d" % (seed,))
 
     assert os.path.exists(output_directory)
