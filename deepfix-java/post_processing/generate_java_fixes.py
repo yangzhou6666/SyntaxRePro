@@ -8,8 +8,8 @@ import math
 import numpy as np
 import tensorflow as tf
 import javac_parser
-# from data_processing.training_data_generator import vectorize
-from generate_java_data import vectorize
+from data_processing.generate_java_data import vectorize
+# from generate_java_data import vectorize
 from neural_net.train import load_data, seq2seq_model as model
 from post_processing.postprocessing_helpers import devectorize, \
     VectorizationFailedException
@@ -54,7 +54,7 @@ parser.add_argument('-o', '--max_output_seq_len',
                     help='max_output_seq_len', type=int, default=28)
 parser.add_argument('--is_timing_experiment', action="store_true",
                     help="This is a timing experiment, do not store results")
-parser.add_argument('-ep', '--evaluation_path', default='data/network_inputs/Deepfix-Java-seed-1189/bin_1/test_raw_bin_1.npy',
+parser.add_argument('-ep', '--evaluation_path', default='data/network_inputs/Deepfix-Java-seed-1189/bin_0/test_raw_bin_0.npy',
                     help='Path to evaluation.npy')
 parser.add_argument('-en','--evaluate_number', default='10', help='Number of programs to evaluate')
 
@@ -167,17 +167,22 @@ def count_token_length(dataset):
         token_seq = test_programs[0][0]
         token_len = len(token_seq.split())
         token_length_distribution[token_len] += 1
+
     
     ranges = {'0~50' : 0, '50~100' : 0, '100~200': 0, '200~450': 0, '450~1000': 0}
     other = 0
     
 
     for i, token_len_data in enumerate(token_length_distribution):
+        print token_len_data
         for key in ranges.keys():
             left = int(key.split('~')[0])
             right = int(key.split('~')[1])
-            if i >= left and i <= right:
+            if i > left and i <= right:
                 ranges[key] += token_len_data
+        if i > 1000:
+            other += token_len_data
+
         
 
     tb = pt.PrettyTable()
@@ -552,7 +557,7 @@ for problem_id, test_programs in test_dataset.iteritems():
                                            normalize_names, reverse=True)
             except:
                 program_vector = None
-
+            
             if program_vector is not None:
                 input_.append(program_vector)
             else:
@@ -566,7 +571,6 @@ for problem_id, test_programs in test_dataset.iteritems():
         assert len(input_) == len(entries)
 
         if len(input_) == 0:
-            # print 'Stopping before iteration %d (no programs remain)' % (round_ + 1)
             break
 
         # Get fix predictions
