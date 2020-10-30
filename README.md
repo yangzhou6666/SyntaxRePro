@@ -11,7 +11,7 @@ Two datasets are needed:
 There are over 1.7 million java pairs. We only need a small amount of them for mutation. Use the following command to preprose java data.
 If it's your first time to generate data, use the following command:
 
-`python data_processing/preprocess_for_java.py -r path_to_java_pairs -bd path_to_benchmark -n pair_number`
+`python preprocess_for_java.py -r path_to_java_pairs -bd path_to_benchmark -n pair_number`
 
 Here you need to specify:
 1. path_to_java_path
@@ -22,7 +22,7 @@ It will create a database in: `/data/java_data/java_data.db`. The process takes 
 
 If you want to extract more pairs, but not to change benchmark table, use:
 
-`python data_processing/preprocess_for_java.py -r path_to_java_pairs -bd path_to_benchmark -n pair_number -o`
+`python preprocess_for_java.py -r path_to_java_pairs -bd path_to_benchmark -n pair_number -o`
 
 # Deepfix Experiment
 
