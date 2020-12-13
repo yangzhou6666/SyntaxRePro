@@ -5,11 +5,12 @@ import json
 import sys
 import javac_parser
 import argparse
+import random
 
 reload(sys)
 sys.setdefaultencoding('utf8')
 
-def initialize_database(db_path, raw_data_path, data_length):
+def initialize_database(db_path, raw_data_path, data_length, is_shuffle=False):
     # Initial table
     with sqlite3.connect(db_path) as conn:
         conn.execute('''DROP TABLE IF EXISTS Code''')
@@ -26,7 +27,10 @@ def initialize_database(db_path, raw_data_path, data_length):
     count = 0
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
-        for file_event_id in os.listdir(raw_data_path):
+        file_list = os.listdir(raw_data_path)
+        if is_shuffle:
+            random.shuffle(file_list)
+        for file_event_id in file_list:
             if count % 10000 == 0:
                 print ('%d programs inserted ... ' % (count))
             if count == data_length:
@@ -126,6 +130,8 @@ if __name__ == '__main__':
                         default = '../../src_files/')
     parser.add_argument('-o', '--only_raw_data', help = 'Only update the Code table, do not change Benchmark table',
                         action='store_true', default=False)
+    parser.add_argument('-is', '--is_shuffle', help = 'Shuffle the files before extracting data',
+                        action='store_true', default=False)
 
     args = parser.parse_args()
     print '----------------------------------------------------'
@@ -140,10 +146,11 @@ if __name__ == '__main__':
     benchmark_dir = args.benchmark_dir
     num_data = args.num_data
     only_raw_data = args.only_raw_data
+    is_shuffle = args.is_shuffle
 
     java = javac_parser.Java()
 
-    initialize_database(db_path, raw_data_path, num_data)
+    initialize_database(db_path, raw_data_path, num_data, is_shuffle)
     if not only_raw_data:
         # initialize benchmark table
         print 'Start to process Benchmark'
