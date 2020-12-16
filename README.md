@@ -35,6 +35,7 @@ cd to `deepfix-java` directory, then
 You may not use the Tsinghua pip mirror.
 
 ## Data Generation
+Switch to `deepfix-java` directory.
 
 ### Training data generation
 Use the following command to generate training data.
@@ -57,6 +58,7 @@ cd to `rlasssit-java` directory, then
 `./init_env.sh`
 
 ## Data Generation
+Switch to `rlassist-java` directory.
 
 ### Training data generation
 

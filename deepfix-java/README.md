@@ -10,9 +10,9 @@ Two datasets are needed:
 1. Benchmark
 2. Java error pairs
 
-`mkdir data/java_data` to store java data.
+Under `deepfix-java` directory, use `mkdir data/java_data` to store java data.
 
-There are over 1.7 million java pairs. We only need a small amount of them for mutation. Use the following command to preprose java data.
+There are over 1.7 million java pairs. We only need a small amount of them for mutation. Use the following command to preprocess java data.
 If it's your first time to generate data, use the following command:
 
 `python data_processing/preprocess_for_java.py -r path_to_java_pairs -bd path_to_benchmark -n pair_number`
@@ -41,5 +41,10 @@ Use the following command to generate training data.
 
 This command will extract errenous programs from benchmark, and convert them into format that Deepfix can take in.
 
+## Train models
+
+`python -O neural_net/train.py data/network_inputs/Deepfix-Java-seed-1189/bin_0 data/checkpoints/Deepfix-Java-seed-1189/bin_0 -v 0.95`
+
+You need to specify path to data, and path to checkpoint directory.
 
 
