@@ -5,6 +5,7 @@ import os, time, argparse, sqlite3, json, numpy as np
 from util.c_tokenizer import C_Tokenizer
 from functools import partial
 from data_processing.typo_mutator import LoopCountThresholdExceededException, FailedToMutateException, Typo_Mutate, typo_mutate, Typo_Mutate_Java
+import data_processing.java_test_data_generator
 
 class FixIDNotFoundInSource(Exception):
     pass
@@ -346,6 +347,7 @@ def generate_training_data(db_path, bins, min_program_length, max_program_length
 
 
 if __name__=='__main__':
+
     # maintain it to keep consistency with deepfix.
 
     drop_ids = True
@@ -378,7 +380,18 @@ if __name__=='__main__':
     np.save(os.path.join(output_directory, 'tokenized-examples.npy'), token_strings)
     np.save(os.path.join(output_directory, 'error-seeding-distribution.npy'), mutations_distribution)
 
-    tl_dict = build_dictionary(token_strings, drop_ids, {})
+
+    # 在tl_dict之前构建evaluation data
+    raw_test_data = data_processing.java_test_data_generator.generate_raw_test_data(
+        db_path, min_program_length, max_program_length)
+    data_processing.java_test_data_generator.save_bins(output_directory, raw_test_data, 'raw')
+    test_data_token_strings = {}
+    for problem_id in raw_test_data.keys():
+        test_data_token_strings[problem_id] = [(raw_test_data[problem_id][0][0], '')]
+    test_data_token_strings = {'evalution': test_data_token_strings}
+
+    combined_token_strings = dict(test_data_token_strings.items() + token_strings.items())
+    tl_dict = build_dictionary(combined_token_strings, drop_ids, {})
 
     token_vectors = vectorize_data(token_strings, tl_dict, max_program_length, max_fix_length, drop_ids=True)
 
