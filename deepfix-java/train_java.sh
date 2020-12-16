@@ -12,7 +12,7 @@ python data_processing/java_training_data_generator.py
 
 python data_processing/java_test_data_generator.py
 
-python -O neural_net/train.py data/network_inputs/Deepfix-Java-seed-1189/bin_1 data/checkpoints/Deepfix-Java-seed-1189/bin_1 -v 0.95
+python -O neural_net/train.py data/network_inputs/Deepfix-Java-seed-1189/bin_0 data/checkpoints/Deepfix-Java-seed-1189/bin_0 -v 0.95
 
-python -O post_processing/generate_java_fixes.py data/checkpoints/Deepfix-Java-seed-1189/bin_1 -v 0.6
-# Do evaluation, speicify path to checkpoint: data/checkpoints/Deepfix-Java-seed-1189/bin_1
+python -O post_processing/generate_java_fixes.py data/checkpoints/Deepfix-Java-seed-1189/bin_0 -v 0.95
+# Do evaluation, speicify path to checkpoint: data/checkpoints/Deepfix-Java-seed-1189/bin_0
