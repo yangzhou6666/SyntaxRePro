@@ -11,3 +11,4 @@ deepfix-java/data/*
 java_data/*
 .DS_Store
 rlassist-java/data/*
+rlassist-java/logs/
